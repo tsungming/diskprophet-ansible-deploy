@@ -1,0 +1,53 @@
+- name: Get Agent ec2
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:Name": "{{ agent.name }}"
+  register: ec2_info
+
+- name: Add hosts to agenthost
+  add_host: hostname={{ item.public_dns_name }}
+            ansible_python_interpreter=python
+            ansible_ssh_private_key_file=~/.ssh/{{ keypair_regst.key.name }}.pem
+            ansible_ssh_user="{{ ec2.user }}"
+            groupname="{{ agent.host_group_name }}"
+  with_items: "{{ ec2_info.instances }}"
+
+- name: Create Security Group
+  ec2_group:
+    name: "{{ agent.security_group_name }}"
+    description: "DiskProphet Agent Security Group"
+    vpc_id: "{{ vpc_id }}"
+    rules:
+      - proto:        "tcp"
+        from_port:    "22"
+        to_port:      "22"
+        cidr_ip:      "{{ agent.ssh_access_ip }}"
+  when: ec2_info.instances|length == 0
+
+- name: Create agent_ec2 instance
+  ec2:
+    instance_tags:
+      Name: "{{ agent.name }}"
+    key_name: "{{ keypair.name }}"
+    instance_type: "{{ agent.instance_type }}"
+    image: "{{ agent.image }}"
+    wait: yes
+    group: "{{ agent.security_group_name }}"
+    count: 1
+    vpc_subnet_id: "{{ public_subnet_id }}"
+    assign_public_ip: yes
+  when: ec2_info.instances|length == 0
+  register: new_ec2_info
+
+#- debug: var=new_ec2_info
+#  when: new_ec2_info | success
+
+- name: Add new hosts to agenthost
+  add_host: hostname={{ item.public_dns_name }}
+            ansible_python_interpreter=python
+            ansible_ssh_private_key_file=~/.ssh/"{{ keypair_regst.key.name }}".pem
+            ansible_ssh_user="{{ ec2.user }}"
+            groupname="{{ agent.host_group_name }}"
+  with_items: "{{ new_ec2_info.instances }}"
+  when: new_ec2_info.changed

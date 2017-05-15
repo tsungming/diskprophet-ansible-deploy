@@ -1,0 +1,58 @@
+- name: Get Master ec2
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:Name": "{{ master.name }}"
+  register: ec2_info
+
+- name: Add hosts to masterhost
+  add_host: hostname="{{ item.public_dns_name }}"
+            ansible_python_interpreter=python
+            ansible_ssh_private_key_file=~/.ssh/{{ keypair_regst.key.name }}.pem
+            ansible_ssh_user="{{ ec2.user }}"
+            groupname="{{ master.host_group_name }}"
+  with_items: "{{ ec2_info.instances }}"
+
+- name: Create Security Group
+  ec2_group:
+    name: "{{ master.security_group_name }}"
+    description: "DiskProphet Master Security Group"
+    vpc_id: "{{ vpc_id }}"
+    rules:
+      - proto:        "tcp"
+        from_port:    "22"
+        to_port:      "22"
+        cidr_ip:      "{{ master.ssh_access_ip }}"
+      - proto:        "tcp"
+        from_port:    "{{ master.influxdb_port }}"
+        to_port:      "{{ master.influxdb_port }}"
+        cidr_ip:      "0.0.0.0/0"
+      - proto:        "tcp"
+        from_port:    "{{ master.master_api_port }}"
+        to_port:      "{{ master.master_api_port }}"
+        cidr_ip:      "0.0.0.0/0"
+  when: ec2_info.instances|length == 0
+
+- name: Create master_ec2 instance
+  ec2:
+    instance_tags:
+      Name: "{{ master.name }}"
+    key_name: "{{ keypair.name }}"
+    instance_type: "{{ master.instance_type }}"
+    image: "{{ master.image }}"
+    wait: yes
+    group: "{{ master.security_group_name }}"
+    count: 1
+    vpc_subnet_id: "{{ public_subnet_id }}"
+    assign_public_ip: yes
+  when: ec2_info.instances|length == 0
+  register: new_ec2_info
+
+- name: Add new hosts to masterhost
+  add_host: hostname={{ item.public_dns_name }}
+            ansible_python_interpreter=python
+            ansible_ssh_private_key_file=~/.ssh/"{{ keypair_regst.key.name }}".pem
+            ansible_ssh_user={{ ec2.user }}
+            groupname="{{ master.host_group_name }}"
+  with_items: "{{ new_ec2_info.instances }}"
+  when: new_ec2_info.changed

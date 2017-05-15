@@ -1,0 +1,44 @@
+vpc:
+  vpc_name: "DiskProphetAnsibleVPC"
+  region: "us-west-2"
+  cidr_block: "10.0.0.0/16"
+  public_subnet_cidr: "10.0.1.0/24"
+
+keypair:
+  name: "diskprophet_ansible"
+  region: "{{ vpc.region }}"
+
+ec2:
+  image: "ami-efd0428f"
+  user: "ubuntu"
+  instance_type: "t2.micro"
+  ssh_access_ip: "0.0.0.0/0"
+
+prediction_server:
+  name: "prediction_server_ec2"
+  host_group_name: "serverhost"
+  security_group_name: "DiskProphet_Server"
+  ssh_access_ip: "{{ ec2.ssh_access_ip }}"
+  influxdb_port: "8086"
+  grafana_port: "3000"
+  prediction_server_port: "19999"
+  image: "{{ ec2.image }}"
+  instance_type: "t2.medium"
+
+master:
+  name: "master_ec2"
+  host_group_name: "masterhost"
+  security_group_name: "DiskProphet_Master"
+  ssh_access_ip: "{{ ec2.ssh_access_ip }}"
+  influxdb_port: "{{ prediction_server.influxdb_port }}"
+  master_api_port: "19999"
+  image: "{{ ec2.image }}"
+  instance_type: "{{ ec2.instance_type }}"
+
+agent:
+  name: "agent_ec2"
+  host_group_name: "agenthost"
+  security_group_name: "DiskProphet_Agent"
+  ssh_access_ip: "{{ ec2.ssh_access_ip }}"
+  image: "{{ ec2.image }}"
+  instance_type: "{{ ec2.instance_type }}"

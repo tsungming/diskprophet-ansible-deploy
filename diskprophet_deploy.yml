@@ -1,0 +1,52 @@
+- name: Provision EC2 nodes
+  hosts: localhost
+  roles:
+    - prepare_aws_ec2
+
+- name: Prepare Configration
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        server_dns: "{{ groups['serverhost'][0] }}"
+
+    - set_fact:
+        master_dns: "{{ groups['masterhost'][0] }}"
+
+    - set_fact:
+        agent_dns: "{{ groups['agenthost'][0] }}"
+
+    - script: prepare_setup.sh {{ server_dns }} {{ server_private_dns_name }} {{ master_dns }} {{ agent_dns }}
+
+- name: Setup Server Node
+  hosts: serverhost
+  gather_facts: no
+  pre_tasks:
+    - name: 'install python2'
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      sudo: yes
+
+  roles:
+    - server
+
+#- name: Setup Master Node
+#  hosts: masterhost
+#  gather_facts: no
+#  pre_tasks:
+#    - name: 'install python2'
+#      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+#      sudo: yes
+#
+#  roles:
+#    - master
+#
+#- name: Setup Agent Node
+#  hosts: agenthost
+#  gather_facts: no
+#  pre_tasks:
+#    - name: 'install python2'
+#      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+#      sudo: yes
+#
+#  roles:
+#    - agent

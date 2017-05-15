@@ -1,0 +1,64 @@
+rest-service {
+  ip = "MASTER_NODE_DNS"
+  port = 29999
+  request-timeout-in-second = 300
+  enabled = "true"
+}
+
+observer {
+  cluster-name = "DiskProphet Cluster"
+  cluster-id = "dp-cluster"
+  running-mode = "observer" // agent | observer | graphite
+  first-flush-cache-in-second = 600  // After 60 seconds * 60 = 60 minutes, flush cache to InfluxDB
+  flush-cache-inteval-in-second = 3600  // After 60 seconds * 60 = 60 minutes, flush cache to InfluxDB
+  influxdb-query-interval-in-second = 3600 // After 60 seconds * 60 = 60 minutes, get InfluxDB data from the input InfluxDB
+  influxdb_first_query_before_in_minutes = 2880 // -1, no before config. 60 * 3 = 180 (before 3 hours)
+  query-limit = 0 // 0, no limit
+}
+
+input-influxdb {
+  server-ips =["localhost"]
+  server-ports = [8086]
+  db-names = ["telegraf"]
+  login-ids = ["root"] //InfluxDb's default login id
+  passwords = ["root"] //InfluxDb's default password
+}
+
+output-influxdb {
+  server-ips =["SERVER_NODE_DNS"]
+//  server-ips =["172.16.64.130"]
+//  server-ips =["172.31.86.170"]
+  server-ports = [8086]
+  db-names = ["telegraf"]
+  login-ids = ["root"] //InfluxDb's default login id
+  passwords = ["root"] //InfluxDb's default password
+  buffered-points = [10]
+  waiting-time-in-milliseconds = [100]
+}
+
+agent {
+  //  The interval of disk metadata query after the observer is configured (cluster and host info are configured)
+  query-interval-in-second = 600 // 60 seconds * 1 = 1 minutes
+  observer-ip = "MASTER_NODE_DNS"
+  observer-port = "29999"
+  output-mode = "observer" // observer | output-to-influxdb
+  smart-command-prefix = "/usr/sbin/" // e.g. /usr/sbin/
+  hostname-command-prefix = "/bin/" // e.g. /bin/
+  lsblk-command-prefix = "/bin/" // e.g. /bin/
+}
+
+graphite {
+//  server-ip = "10.2.10.112"
+  server-ip = "172.31.86.170"
+  metrics-prefix = "metacloud.pas1.mhv"
+  curl-command = ""
+//  curl-command = "/usr/bin/curl http://172.31.86.150"
+// curl-command = "/usr/bin/curl -x http://10.2.10.111:3128 http://10.2.10.111"
+  data-fetcher-number = 5
+  fetch-interval-in-second = 2 // 4 hours * 60 * 60
+  fetch-before-in-mintue = 60 // 2 days * 24
+  get-data-start-date = "20170302"
+  get-data-end-date = "20170221"
+  fetch-mode = "start-end-date" // before-in-hour | start-end-date
+  fetch-command-type = "http" // curl | http | https
+}

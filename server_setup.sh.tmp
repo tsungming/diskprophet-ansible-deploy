@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+function install_app_online_ubuntu_xenial() {
+    cat /etc/apt/sources.list.d/influxdb.list | grep xenial &>/dev/null
+    [ ! $? -eq 0 ] && {
+        curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+        source /etc/lsb-release
+        echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+    }
+
+    which influx &>/dev/null
+    [ ! $? -eq 0 ] && {
+        echo "Install influx  ..."
+        sudo apt-get update && sudo apt-get install -y influxdb
+        sudo systemctl restart influxdb
+        sudo systemctl enable influxdb
+    }
+
+    influx -execute 'CREATE DATABASE telegraf'
+    influx -execute 'CREATE RETENTION POLICY one_day ON telegraf DURATION 1d REPLICATION 1'
+
+    which java &>/dev/null
+    [ ! $? -eq 0 ] && {
+        echo "Install java  ..."
+        sudo apt-get update
+        sudo apt-get install -y default-jre
+    }
+
+    ls spark | grep spark-2.0.2-bin-hadoop2.7 &>/dev/null
+    [ ! $? -eq 0 ] && {
+        mkdir -p /home/ubuntu/spark
+        curl https://d3kbcqa49mib13.cloudfront.net/spark-2.0.2-bin-hadoop2.7.tgz | tar xvz -C /home/ubuntu/spark
+    }
+
+    ps aux | grep -v grep | grep org.apache.spark.deploy.master.Master &>/dev/null
+    [ ! $? -eq 0 ] && {
+        cd /home/ubuntu/spark/spark-2.0.2-bin-hadoop2.7
+        ./sbin/start-master.sh
+        master_url=$(printf 'spark://%s:7077' "SERVER_PRIVATE_DNS")
+        ./sbin/start-slave.sh $master_url
+    }
+}
+
+RCol='\e[0m'; Red='\e[0;31m'; BRed='\e[1;31m'
+
+platform='unknown'
+cat /etc/*release | grep PRETTY_NAME | grep Ubuntu | grep 16.04 &>/dev/null
+[ $? -eq 0 ] && {
+    platform='ubuntu'
+}
+
+if [ "${platform}" == "unknown" ]; then
+    echo -e ${Red}This agent_setup is only support \"Ubuntu 16.04\" ${RCol}
+    exit 1
+fi
+
+install_app_online_ubuntu_xenial
+
+exit 0
+

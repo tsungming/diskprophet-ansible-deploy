@@ -1,0 +1,14 @@
+- name: "create vpc"
+  include: create_vpc.yml
+
+- name: "create keypair"
+  include: create_keypair.yml
+
+- name: "create prediction_server ec2 "
+  include: create_prediction_server.yml
+
+- name: "create master ec2"
+  include: create_ec2_master.yml
+
+- name: "create agent_ec2"
+  include: create_ec2_agent.yml

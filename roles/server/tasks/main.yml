@@ -1,0 +1,22 @@
+- name: create directory if they don't exist
+  file:
+    path: /home/ubuntu/diskprophet-server
+    state: directory
+
+- name: Checking files
+  stat:
+    path: "/home/ubuntu/diskprophet-server/{{ item }}"
+  register: file_stats
+  with_items:
+    - ["diskprophet-server.conf"]
+
+- name: Copy files
+  copy:
+    src: "{{ item.item }}"
+    dest: "/home/ubuntu/diskprophet-server/{{ item.item }}"
+  when: item.stat.exists == false
+  with_items:
+    - "{{file_stats.results}}"
+
+- name: Server Setup
+  script: server_setup.sh

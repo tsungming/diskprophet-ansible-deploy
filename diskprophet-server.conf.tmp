@@ -1,0 +1,75 @@
+akka.http.client.parsing.max-content-length = 1024m
+
+disk-prophet {
+  app-name = "DiskProphet"
+  running-mode = "disk-prediction"
+  use-backblaze-dataset = "yes"
+  write-throttole-in-second = 0
+  rest-enabled = "true"
+  rest-ip = "localhost"
+  rest-port = "19999"
+  rest-request-timeout-in-second = 600
+  license-file = "diskprophet.license"
+}
+
+observer {
+  init-stage-interval-in-minitue = 5
+  oberve-stage-interval-in-minute = 20
+}
+
+machine-learning {
+  engine-name = "Apache Spark 2.0.2"
+  engine-url = "spark://SERVER_PRIVATE_DNS:7077"
+  engine-enabled = "true"
+  compute-node-memory = "2g" // For Apache Spark, set to spark.executor.memory
+  library-path = "/root/diskprophet-server-1.0.jar"
+}
+
+demo-data {
+  // Mac
+  //  demo-data-path = "/Users/brian/Downloads/smart-files"
+  // Linux
+  demo-data-path = "smart-files/"
+  demo-data-writer-number = 5
+  number-of-files-to-write = 50
+}
+
+prediction {
+  predicting-demo-data = "false"
+  predicting-demo-data-start-date = "2017-03-23" // required, always set this value
+  predicting-demo-data-end-date = "2017-03-24" // required, always set this value
+  prediction-first-round-after-start-in-hour = 0 // The time for the first prediction after DiskProphet Server is started
+  prediction-round-interval-in-hour = 24 // The time interval of executing next prediction'
+  predict-before-from-now-in-hour = 48 // Hours that backward from now
+  predicting-backblaze-data = "false"
+  modeling-spec-file-name = "modeling.spec"
+  repository-path = "model"
+}
+
+disk-modeling {
+  modeling-disk-start-date = "2015-01-01" // required, always set this value
+  modeling-disk-end-date = "2016-09-30" // required, always set this value
+  observation-interval-in-mintue = 1440
+  modeling-round-interval-in-mintue = 1440 // The time interval of executing next modleing
+  modeling-iterations = 5
+  load-model-from-file = "true"
+  bin-size = 6
+  write-metrics-to-db = true
+  modeling-spec-file-name = "modeling.spec"
+  repository-path = "model"
+}
+
+report {
+  repository-path = "report-output"
+  near-failure-alert-training-data-length-in-day = 14 // Get data for near-failure prediction before (e.g. 14 days ago) from today
+}
+
+influxdb {
+  server-ip = "SERVER_NODE_DNS"
+  server-port = 8086
+  db-name = "telegraf"
+  login-id = "root" //InfluxDb's default login id
+  password = "root" //InfluxDb's default password
+  buffered-points = 10
+  waiting-time-in-milliseconds = 100
+}

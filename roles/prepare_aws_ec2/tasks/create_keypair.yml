@@ -1,0 +1,16 @@
+- name: "create keypair"
+  ec2_key:
+    name: "{{ keypair.name }}"
+    region: "{{ keypair.region }}"
+  register: keypair_regst
+
+- name: "create keypair file"
+  file:
+    path=~/.ssh/{{ keypair_regst.key.name }}.pem
+    state=touch
+    mode=0600
+  when: keypair_regst.key.private_key is defined
+
+- name: "keypair write"
+  local_action: shell echo "{{ keypair_regst.key.private_key }}" > ~/.ssh/"{{ keypair_regst.key.name }}".pem
+  when: keypair_regst.key.private_key is defined
