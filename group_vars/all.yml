@@ -31,7 +31,7 @@ master:
   security_group_name: "DiskProphet_Master"
   ssh_access_ip: "{{ ec2.ssh_access_ip }}"
   influxdb_port: "{{ prediction_server.influxdb_port }}"
-  master_api_port: "19999"
+  master_api_port: "29999"
   image: "{{ ec2.image }}"
   instance_type: "{{ ec2.instance_type }}"
 

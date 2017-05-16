@@ -26,8 +26,6 @@ input-influxdb {
 
 output-influxdb {
   server-ips =["SERVER_NODE_DNS"]
-//  server-ips =["172.16.64.130"]
-//  server-ips =["172.31.86.170"]
   server-ports = [8086]
   db-names = ["telegraf"]
   login-ids = ["root"] //InfluxDb's default login id

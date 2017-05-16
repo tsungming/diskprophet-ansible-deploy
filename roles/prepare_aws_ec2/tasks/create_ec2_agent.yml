@@ -19,11 +19,15 @@
     description: "DiskProphet Agent Security Group"
     vpc_id: "{{ vpc_id }}"
     rules:
+      - proto: icmp
+        from_port: "8" # icmp type, -1 = any type
+        to_port:  "-1" # icmp subtype, -1 = any subtype
+        cidr_ip: "{{ vpc.cidr_block }}"
       - proto:        "tcp"
         from_port:    "22"
         to_port:      "22"
         cidr_ip:      "{{ agent.ssh_access_ip }}"
-  when: ec2_info.instances|length == 0
+#  when: ec2_info.instances|length == 0
 
 - name: Create agent_ec2 instance
   ec2:

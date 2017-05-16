@@ -18,19 +18,8 @@
 
     - script: prepare_setup.sh {{ server_dns }} {{ server_private_dns_name }} {{ master_dns }} {{ agent_dns }}
 
-- name: Setup Server Node
-  hosts: serverhost
-  gather_facts: no
-  pre_tasks:
-    - name: 'install python2'
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
-      sudo: yes
-
-  roles:
-    - server
-
-#- name: Setup Master Node
-#  hosts: masterhost
+#- name: Setup Server Node
+#  hosts: serverhost
 #  gather_facts: no
 #  pre_tasks:
 #    - name: 'install python2'
@@ -38,7 +27,18 @@
 #      sudo: yes
 #
 #  roles:
-#    - master
+#    - server
+
+- name: Setup Master Node
+  hosts: masterhost
+  gather_facts: no
+  pre_tasks:
+    - name: 'install python2'
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      sudo: yes
+
+  roles:
+    - master
 #
 #- name: Setup Agent Node
 #  hosts: agenthost

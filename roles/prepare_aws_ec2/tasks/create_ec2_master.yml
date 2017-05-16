@@ -19,6 +19,10 @@
     description: "DiskProphet Master Security Group"
     vpc_id: "{{ vpc_id }}"
     rules:
+      - proto: icmp
+        from_port: "8" # icmp type, -1 = any type
+        to_port:  "-1" # icmp subtype, -1 = any subtype
+        cidr_ip: "{{ vpc.cidr_block }}"
       - proto:        "tcp"
         from_port:    "22"
         to_port:      "22"
@@ -31,7 +35,7 @@
         from_port:    "{{ master.master_api_port }}"
         to_port:      "{{ master.master_api_port }}"
         cidr_ip:      "0.0.0.0/0"
-  when: ec2_info.instances|length == 0
+#  when: ec2_info.instances|length == 0
 
 - name: Create master_ec2 instance
   ec2:

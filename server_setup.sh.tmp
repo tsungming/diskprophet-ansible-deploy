@@ -12,12 +12,23 @@ function install_app_online_ubuntu_xenial() {
     [ ! $? -eq 0 ] && {
         echo "Install influx  ..."
         sudo apt-get update && sudo apt-get install -y influxdb
-        sudo systemctl restart influxdb
         sudo systemctl enable influxdb
     }
-
+    sudo systemctl restart influxdb
     influx -execute 'CREATE DATABASE telegraf'
     influx -execute 'CREATE RETENTION POLICY one_day ON telegraf DURATION 1d REPLICATION 1'
+
+    which grafana-server &>/dev/null
+    [ ! $? -eq 0 ] && {
+        echo "Install grafana  ..."
+        wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.2.0_amd64.deb
+        sudo apt-get install -y adduser libfontconfig
+        sudo dpkg -i grafana_4.2.0_amd64.deb
+        sudo systemctl daemon-reload
+        sudo systemctl enable grafana-server
+    }
+    sudo systemctl restart grafana-server
+    curl 'http://admin:admin@localhost:3000/api/datasources' -X POST -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"name":"DiskProphet","type":"influxdb","url":"http://localhost:8086","access":"proxy","isDefault":true,"database":"telegraf"}'
 
     which java &>/dev/null
     [ ! $? -eq 0 ] && {
@@ -55,6 +66,25 @@ if [ "${platform}" == "unknown" ]; then
 fi
 
 install_app_online_ubuntu_xenial
+
+# Check the listen port
+netstat -lnt | awk '$6 == "LISTEN"' | grep 8086 &>/dev/null
+[ ! $? -eq 0 ] && {
+    echo "Failed to check influxdb port (8086)"
+    exit 1
+}
+
+netstat -lnt | awk '$6 == "LISTEN"' | grep 3000 &>/dev/null
+[ ! $? -eq 0 ] && {
+    echo "Failed to check grafana port (3000)"
+    exit 1
+}
+
+netstat -lnt | awk '$6 == "LISTEN"' | grep 7077 &>/dev/null
+[ ! $? -eq 0 ] && {
+    echo "Failed to check spark port (7077)"
+    exit 1
+}
 
 exit 0
 

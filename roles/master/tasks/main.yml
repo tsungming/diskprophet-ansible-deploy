@@ -1,0 +1,22 @@
+- name: create directory if they don't exist
+  file:
+    path: /home/ubuntu/diskprophet-master
+    state: directory
+
+- name: "Checking files"
+  stat:
+    path: "/home/ubuntu/diskprophet-master/{{ item }}"
+  register: file_stats
+  with_items:
+    - ["diskprophet-master.conf", "diskprophet-master.service"]
+
+- name: Copy files
+  copy:
+    src: "{{ item.item }}"
+    dest: "/home/ubuntu/diskprophet-master/{{ item.item }}"
+  when: item.stat.exists == false
+  with_items:
+    - "{{file_stats.results}}"
+
+- name: Master Setup
+  script: master_setup.sh

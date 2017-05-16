@@ -1,0 +1,14 @@
+[Unit]
+Description=The plugin-driven server agent for smart data into Diskprophet-Master
+
+[Service]
+WorkingDirectory=/home/ubuntu/diskprophet/
+Environment="PATH=/usr/sbin/:$PATH"
+SyslogIdentifier=SocketTest
+ExecStart=/usr/bin/java -Dapp.conf=diskprophet-master.conf -jar diskprophet-master-1.0.jar
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target

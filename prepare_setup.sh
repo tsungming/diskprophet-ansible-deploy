@@ -17,10 +17,13 @@ cat diskprophet-server.conf.tmp | sed "s/SERVER_PRIVATE_DNS/${private}/g" \
 | sed "s/SERVER_NODE_DNS/${server}/g" > diskprophet-server.conf
 mv diskprophet-server.conf ./roles/server/tasks/
 
-#cat diskprophet-master.conf.tmp | sed "s/SERVER_NODE_DNS/${server}/g" \
-#| sed "s/MASTER_NODE_DNS/${master}/g" > diskprophet-master.conf
-#
-#mv diskprophet-master.conf ./roles/master/tasks/
+cat diskprophet-master.conf.tmp | sed "s/SERVER_NODE_DNS/${server}/g" \
+| sed "s/MASTER_NODE_DNS/${master}/g" > diskprophet-master.conf
+mv diskprophet-master.conf ./roles/master/tasks/
+
+cat master_setup.sh.tmp | sed "s/SERVER_NODE_DNS/${server}/g" > master_setup.sh
+mv master_setup.sh ./roles/master/tasks/
+
 #
 #cat telegraf.conf.tmp | sed "s/MASTER_NODE_DNS/${master}/g" > telegraf.conf
 #mv telegraf.conf ./roles/agent/tasks/
