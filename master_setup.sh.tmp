@@ -14,7 +14,11 @@ function install_app_online_ubuntu_xenial() {
         sudo apt-get update && sudo apt-get install -y influxdb
         sudo systemctl enable influxdb
     }
-    sudo systemctl restart influxdb
+    systemctl status influxdb | grep running &>/dev/null
+    [ ! $? -eq 0 ] && {
+        sudo systemctl restart influxdb
+        sleep 2
+    }
     influx -execute 'CREATE DATABASE telegraf'
     influx -execute 'CREATE RETENTION POLICY one_day ON telegraf DURATION 1d REPLICATION 1'
 
@@ -45,11 +49,17 @@ function retry {
             ((tries++))
         fi
     done
+    return 0
 }
 
 # Refresh ARP
 sudo arp -d SERVER_NODE_DNS &>/dev/null
 ping -c 3 SERVER_NODE_DNS &>/dev/null
+
+retry "Trying to connect to Influxdb" "curl -sl -I SERVER_NODE_DNS:8086/ping"
+[ ! $? -eq 0 ] && {
+    exit 1
+}
 
 install_app_online_ubuntu_xenial
 
@@ -73,7 +83,5 @@ netstat -lnt | awk '$6 == "LISTEN"' | grep 8086 &>/dev/null
     echo "Failed to check influxdb port (8086)"
     exit 1
 }
-
-retry "Trying to connect to Influxdb" "curl -sl -I SERVER_NODE_DNS:8086/ping"
 
 exit 0

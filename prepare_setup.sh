@@ -24,11 +24,14 @@ mv diskprophet-master.conf ./roles/master/tasks/
 cat master_setup.sh.tmp | sed "s/SERVER_NODE_DNS/${server}/g" > master_setup.sh
 mv master_setup.sh ./roles/master/tasks/
 
-#
-#cat telegraf.conf.tmp | sed "s/MASTER_NODE_DNS/${master}/g" > telegraf.conf
-#mv telegraf.conf ./roles/agent/tasks/
-#
-#cat diskprophet-agent.conf.tmp | sed "s/MASTER_NODE_DNS/${master}/g" > diskprophet-agent.conf
-#mv diskprophet-agent.conf ./roles/agent/tasks/
+
+cat telegraf.conf.tmp | sed "s/MASTER_NODE_DNS/${master}/g" > telegraf.conf
+mv telegraf.conf ./roles/agent/tasks/
+
+cat diskprophet-agent.conf.tmp | sed "s/MASTER_NODE_DNS/${master}/g" > diskprophet-agent.conf
+mv diskprophet-agent.conf ./roles/agent/tasks/
+
+cat agent_setup.sh.tmp | sed "s/MASTER_NODE_DNS/${master}/g" > agent_setup.sh
+mv agent_setup.sh ./roles/agent/tasks/
 
 exit 0

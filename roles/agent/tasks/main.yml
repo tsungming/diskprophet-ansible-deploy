@@ -1,0 +1,22 @@
+- name: create directory if they don't exist
+  file:
+    path: /home/ubuntu/diskprophet-agent
+    state: directory
+
+- name: Checking files
+  stat:
+    path: "/home/ubuntu/diskprophet-agent/{{ item }}"
+  register: file_stats
+  with_items:
+    - ["telegraf.conf", "diskprophet-agent.conf", "diskprophet-agent.service"]
+
+- name: Copy files
+  copy:
+    src: "{{ item.item }}"
+    dest: "/home/ubuntu/diskprophet-agent/{{ item.item }}"
+  when: item.stat.exists == false
+  with_items:
+    - "{{file_stats.results}}"
+
+- name: Agent Setup
+  script: agent_setup.sh

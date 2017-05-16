@@ -29,19 +29,8 @@
 #  roles:
 #    - server
 
-- name: Setup Master Node
-  hosts: masterhost
-  gather_facts: no
-  pre_tasks:
-    - name: 'install python2'
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
-      sudo: yes
-
-  roles:
-    - master
-#
-#- name: Setup Agent Node
-#  hosts: agenthost
+#- name: Setup Master Node
+#  hosts: masterhost
 #  gather_facts: no
 #  pre_tasks:
 #    - name: 'install python2'
@@ -49,4 +38,15 @@
 #      sudo: yes
 #
 #  roles:
-#    - agent
+#    - master
+
+- name: Setup Agent Node
+  hosts: agenthost
+  gather_facts: no
+  pre_tasks:
+    - name: 'install python2'
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      sudo: yes
+
+  roles:
+    - agent

@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+function install_app_online_ubuntu_xenial() {
+    cat /etc/apt/sources.list.d/influxdb.list | grep xenial &>/dev/null
+    [ ! $? -eq 0 ] && {
+        curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+        source /etc/lsb-release
+        echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+    }
+
+    which telegraf &>/dev/null
+    [ ! $? -eq 0 ] && {
+        echo "Install telegraf  ..."
+        sudo apt-get update && sudo apt-get install -y telegraf
+        sudo systemctl enable telegraf
+        sudo systemctl stop telegraf
+    }
+
+    which java &>/dev/null
+    [ ! $? -eq 0 ] && {
+        echo "Install java  ..."
+        sudo apt-get update
+        sudo apt-get install -y default-jre
+    }
+
+    which smartctl &>/dev/null
+    [ ! $? -eq 0 ] && {
+        echo "Install smartmontools  ..."
+        sudo apt-get install -y smartmontools
+    }
+}
+
+function retry {
+    description=$1
+    cmd=$2; timeout=${3:-5}; maxTries=${4:-3}; interval=${5:-3}
+    tries=1
+
+    echo "$description"
+    until timeout $timeout $cmd &>/dev/null
+    do
+        if (( tries == maxTries ))
+        then
+            echo "Attempt $tries/$maxTries failed and there are no more attempts left!"
+            return 1
+        else
+            echo "Attempt $tries/$maxTries failed! Trying again in $interval seconds..."
+            sleep $interval
+            ((tries++))
+        fi
+    done
+    return 0
+}
+
+# Refresh ARP
+sudo arp -d MASTER_NODE_DNS &>/dev/null
+ping -c 3 MASTER_NODE_DNS &>/dev/null
+
+retry "Trying to connect to Influxdb" "curl -sl -I MASTER_NODE_DNS:8086/ping"
+[ ! $? -eq 0 ] && {
+    exit 1
+}
+
+install_app_online_ubuntu_xenial
+
+echo "setup_agent  ..."
+cd /home/ubuntu/diskprophet-agent
+sudo cp telegraf.conf /etc/telegraf/telegraf.conf
+sudo systemctl restart telegraf
+
+cat /lib/systemd/system/diskprophet-agent.service | grep Install &>/dev/null
+[ ! $? -eq 0 ] && {
+    cd /home/ubuntu/diskprophet-agent
+    chmod 664 diskprophet-agent.service
+    currentPath=$(pwd)
+    sed -i "s@WorkingDirectory.*@WorkingDirectory=${currentPath}@g" diskprophet-agent.service
+    yes | sudo cp diskprophet-agent.service /lib/systemd/system
+    sudo ln -s /lib/systemd/system/diskprophet-agent.service /etc/systemd/system/multi-user.target.wants/diskprophet-agent.service &>/dev/null
+    sudo systemctl daemon-reload &>/dev/null
+    sudo systemctl reload diskprophet-agent &>/dev/null
+}
+
+sudo systemctl stop diskprophet-agent
+
+exit 0
