@@ -4,8 +4,6 @@
 in an [AWS Virtual Private Cloud VPC](https://aws.amazon.com/vpc/).
 The stack can be deployed using the following command:
 
-
-## tl;dr
 ```bash
 # setup
 $ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts diskprophet_deploy.yml
